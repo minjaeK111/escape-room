@@ -1,0 +1,6 @@
+# 이전 버전 파일 (현재 index.html은 단일 파일로 독립 실행)
+script.js
+style.css
+
+.DS_Store
+Thumbs.db
