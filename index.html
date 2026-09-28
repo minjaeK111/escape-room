@@ -273,7 +273,7 @@ body{
     <h1>03생활관 불침번이 사라졌다.</h1>
     <p>근무 교대 시각, 초소 근무자가 보고했다. &ldquo;03동에 불이 켜져 있는데 아무도 안 나옵니다.&rdquo; 조사관인 네가 문을 열고 들어서자 — 문이 뒤에서 잠겼다.</p>
     <p>관물대, 근무표, 무전 기록에 흔적이 남아 있다. 군을 모르면 그 흔적을 못 읽는다. 잘못 짚을 때마다 복도에서 <b>인기척</b>이 가까워진다. 가득 차면… 그게 문을 연다. 동틀 때까지.</p>
-    <p style="color:var(--muted);font-size:.86rem">드래그해서 둘러보고, 빛나는 물체를 눌러 조사한다.</p>
+    <p style="color:var(--muted);font-size:.86rem">방향키(WASD)로 이동, 드래그로 둘러보고, 빛나는 물체를 눌러 조사한다.</p>
     <div class="btn-row"><button class="btn" id="startBtn" type="button">문을 연다</button></div>
   </div>
 </div>
@@ -416,7 +416,7 @@ try{
 }catch(e){ document.getElementById("nowebgl").classList.add("show"); }
 
 const interactables=[];
-const camAnchor=new THREE.Vector3(0,1.66,-5.2);    // 먼 벽 앞 — 통로 따라 출입구 쪽을 본다 (휠로 이동)
+const camAnchor=new THREE.Vector3(0,1.66,-6.0);    // 먼 벽 앞 — 통로 따라 출입구 쪽을 본다 (WASD/방향키·휠로 이동)
 const look={yaw:0.03,pitch:0.02};
 const curTarget=new THREE.Vector3();
 function lookVec(out){
@@ -427,6 +427,8 @@ function lookVec(out){
     camAnchor.z+Math.cos(y)*Math.cos(p));
 }
 let dragging=false,downX=0,downY=0,moved=0,autoRotate=true,idle=0;
+const keys={};
+const ROOM={xMin:-4,xMax:4,zMin:-6,zMax:6};
 let focused=null,panelOpen=false;
 const tween={active:false,t:0,dur:1,p0:new THREE.Vector3(),p1:new THREE.Vector3(),t0:new THREE.Vector3(),t1:new THREE.Vector3(),done:null};
 const raycaster=new THREE.Raycaster();
@@ -437,12 +439,12 @@ function build3D(){
   renderer.setSize(innerWidth,innerHeight);
   renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   renderer.outputEncoding=THREE.sRGBEncoding;
-  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.0;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.06;
   mount.appendChild(renderer.domElement);
 
   scene=new THREE.Scene();
   scene.background=new THREE.Color(0x090b0e);
-  scene.fog=new THREE.FogExp2(0x090b0e,0.04);
+  scene.fog=new THREE.FogExp2(0x090b0e,0.03);
 
   camera=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,0.1,100);
 
@@ -462,7 +464,7 @@ function build3D(){
     g.computeVertexNormals(); return g;
   }
   const box=(w,h,d,material,x,y,z,ry)=>{
-    const r=Math.min(0.04, Math.min(w,h,d)*0.3);
+    const r=Math.min(0.06, Math.min(w,h,d)*0.32);
     const g=new THREE.Mesh(rbox(w,h,d,r),material);
     g.position.set(x,y,z);if(ry)g.rotation.y=ry;g.castShadow=true;g.receiveShadow=true;scene.add(g);return g;};
   // 붓자국·얼룩 노이즈가 있는 캔버스 텍스처 — 완벽히 균일한 CG 질감을 깨기 위함
@@ -502,9 +504,10 @@ function build3D(){
     c.setHSL(h.h,h.s,Math.max(0,Math.min(1,h.l+(Math.random()-.5)*amt)));return c;
   }
 
-  // ==== 실제 육군 생활관 (야간) ====
-  const RW=8.4, RD=15, RH=3.7;
+  // ==== 실제 육군 생활관 (야간) — 더 넓고, 모서리를 깨는 몰딩·기둥·러그를 더한 "세트장" 톤 ====
+  const RW=10.2, RD=17.4, RH=4.1;
   const zF=-RD/2, zN=RD/2, xL=-RW/2, xR=RW/2;
+  ROOM.xMin=xL+0.6; ROOM.xMax=xR-0.6; ROOM.zMin=zF+0.8; ROOM.zMax=zN-0.8;
 
   // 바닥 — 밝은 회색 리놀륨 (타일 자국 + 얼룩 + 스크래치)
   const floorTex=noiseTex(1024,1024,"#83857c",
@@ -516,8 +519,8 @@ function build3D(){
   const ceil=new THREE.Mesh(new THREE.PlaneGeometry(RW,RD),mat(0x33353a,1));
   ceil.rotation.x=Math.PI/2;ceil.position.y=RH;scene.add(ceil);
 
-  // 벽 — 아래 분홍 웨인스코트 + 위 흰벽 + 트림/걸레받이 (벽마다 다른 얼룩 텍스처)
-  const wainH=1.15, trimMat=mat(0x6a565a,.8), bbMat=mat(0x2a2724,1);
+  // 벽 — 아래 분홍 웨인스코트 + 위 흰벽 + 트림/걸레받이/크라운 몰딩 (벽마다 다른 얼룩 텍스처)
+  const wainH=1.15, trimMat=mat(0x6a565a,.8), bbMat=mat(0x2a2724,1), crownMat=mat(0x2c2e32,.65);
   function wall(w,x,z,ry){
     const loTex=noiseTex(512,256,"#8a6a6e",["#977077","#7a5c60","#8f6469"],{n:10,size:110,alpha:.08,speckle:6});
     const hiTex=noiseTex(512,384,"#93938c",["#9c9c95","#87877f","#a19f96"],{n:12,size:150,alpha:.06,speckle:7});
@@ -527,8 +530,15 @@ function build3D(){
     hi.position.set(x,wainH+(RH-wainH)/2,z);if(ry)hi.rotation.y=ry;hi.receiveShadow=true;scene.add(hi);
     box(ry?0.05:w,0.05,ry?w:0.05,trimMat,x,wainH,z);
     box(ry?0.06:w,0.12,ry?w:0.06,bbMat,x,0.06,z);
+    box(ry?0.09:w,0.09,ry?w:0.09,crownMat,x,RH-0.07,z); // 크라운 몰딩 — 벽·천장이 만나는 직각을 눈에 덜 띄게
   }
   wall(RW,0,zF,0); wall(RW,0,zN,0); wall(RD,xL,0,Math.PI/2); wall(RD,xR,0,-Math.PI/2);
+  // 모서리 기둥 — 두 평면이 날카롭게 만나는 자리를 둥근 형태로 가려 '세트장' 같은 마감을 준다
+  const pilMat=mat(0x2a2c30,.6,.12);
+  [[xL,zF],[xR,zF],[xL,zN],[xR,zN]].forEach(([px,pz])=>{
+    const p=new THREE.Mesh(new THREE.CylinderGeometry(0.13,0.16,RH,14),pilMat);
+    p.position.set(px,RH/2,pz);p.castShadow=true;p.receiveShadow=true;scene.add(p);
+  });
 
   // 천장 형광등 패널 — 야간엔 대부분 소등, 취침등 2개 + 1개 깜빡
   for(let cx=-1;cx<=1;cx++) for(let pz=-2;pz<=2;pz++){
@@ -536,23 +546,47 @@ function build3D(){
     const m=new THREE.MeshStandardMaterial({color:0xdcdde0,
       emissive: on?0xe6ecf4:(flick?0x2a2d33:0x161719), emissiveIntensity: on?1.15:(flick?.3:0)});
     const p=new THREE.Mesh(new THREE.BoxGeometry(1.0,0.05,2.0),m);
-    p.position.set(cx*2.5,RH-0.04,pz*2.7);scene.add(p);
-    box(1.18,0.13,2.18,mat(0x24262a,1),cx*2.5,RH-0.02,pz*2.7);
-    if(on){const pl=new THREE.PointLight(0xcfe0f2,.55,8,2);pl.position.set(cx*2.5,RH-.4,pz*2.7);scene.add(pl);}
-    if(flick){const pl=new THREE.PointLight(0xcfe0f2,.3,7,2);pl.position.set(cx*2.5,RH-.4,pz*2.7);scene.add(pl);flickPanel={mesh:p,light:pl};}
+    p.position.set(cx*3.0,RH-0.04,pz*3.1);scene.add(p);
+    box(1.18,0.13,2.18,mat(0x24262a,1),cx*3.0,RH-0.02,pz*3.1);
+    if(on){const pl=new THREE.PointLight(0xcfe0f2,.55,8,2);pl.position.set(cx*3.0,RH-.4,pz*3.1);scene.add(pl);}
+    if(flick){const pl=new THREE.PointLight(0xcfe0f2,.3,7,2);pl.position.set(cx*3.0,RH-.4,pz*3.1);scene.add(pl);flickPanel={mesh:p,light:pl};}
   }
   // 원형 천장 부착물
   const dome=new THREE.Mesh(new THREE.SphereGeometry(0.26,16,10,0,Math.PI*2,0,Math.PI/2),mat(0x1b1d20,1));
-  dome.rotation.x=Math.PI;dome.position.set(0,RH-0.02,2);scene.add(dome);
+  dome.rotation.x=Math.PI;dome.position.set(0,RH-0.02,2.3);scene.add(dome);
 
-  // 조명
-  scene.add(new THREE.HemisphereLight(0x2b3452,0x141009,0.22));
+  // 조명 — 드라마 세트처럼 그림자는 깊게, 그러나 완전히 까맣지 않게 필 라이트를 더 준다
+  scene.add(new THREE.HemisphereLight(0x2b3452,0x171208,0.3));
   const moon=new THREE.DirectionalLight(0xa9c6ee,0.72);
-  moon.position.set(1.5,5,zF-5);moon.target.position.set(0,1,zF+4);
+  moon.position.set(1.8,5.4,zF-5.8);moon.target.position.set(0,1,zF+4.6);
   moon.castShadow=true;moon.shadow.mapSize.set(2048,2048);
-  moon.shadow.camera.left=-7;moon.shadow.camera.right=7;moon.shadow.camera.top=7;moon.shadow.camera.bottom=-7;moon.shadow.camera.far=32;
+  moon.shadow.camera.left=-9.5;moon.shadow.camera.right=9.5;moon.shadow.camera.top=9.5;moon.shadow.camera.bottom=-9.5;moon.shadow.camera.far=36;
   scene.add(moon,moon.target);
-  const fill=new THREE.PointLight(0x8492a6,0.22,16,2);fill.position.set(0,3,1);scene.add(fill);
+  const fill=new THREE.PointLight(0x8492a6,0.32,20,2);fill.position.set(0,3.4,1.2);scene.add(fill);
+  const rim=new THREE.PointLight(0xffcf9e,0.28,10,2);rim.position.set(3.6,2.6,zN-1.5);scene.add(rim); // 출입구 쪽 따뜻한 림 라이트
+
+  // 통로 보이는 달빛 광선 — 드라마 세트 특유의 창문 빛줄기
+  function beam(wx){
+    const b=new THREE.Mesh(new THREE.ConeGeometry(1.7,4.6,4,1,true),
+      new THREE.MeshBasicMaterial({color:0xbfd2ef,transparent:true,opacity:0.05,depthWrite:false,
+        blending:THREE.AdditiveBlending,side:THREE.DoubleSide}));
+    b.position.set(wx,2.3,zF+2.6);b.rotation.x=Math.PI*0.44;b.rotation.y=0.18;scene.add(b);
+  }
+  beam(-2.6); beam(2.6);
+
+  // 통로 러그 — 모서리를 둥글려 바닥의 격자·직각 느낌을 깨는 세트 소품
+  function roundedRectShape(w,h,r){
+    const s=new THREE.Shape(), x=-w/2, y=-h/2;
+    s.moveTo(x+r,y); s.lineTo(x+w-r,y); s.absarc(x+w-r,y+r,r,-Math.PI/2,0);
+    s.lineTo(x+w,y+h-r); s.absarc(x+w-r,y+h-r,r,0,Math.PI/2);
+    s.lineTo(x+r,y+h); s.absarc(x+r,y+h-r,r,Math.PI/2,Math.PI);
+    s.lineTo(x,y+r); s.absarc(x+r,y+r,r,Math.PI,Math.PI*1.5);
+    return s;
+  }
+  const rugTex=noiseTex(256,1024,"#5a2c2c",["#6d3838","#45201f","#623030"],{n:22,size:110,alpha:.09,speckle:8});
+  const rug=new THREE.Mesh(new THREE.ShapeGeometry(roundedRectShape(1.85,11.5,0.5),24),
+    new THREE.MeshStandardMaterial({map:rugTex,roughness:.96}));
+  rug.rotation.x=-Math.PI/2;rug.position.set(0.15,0.012,-0.4);rug.receiveShadow=true;scene.add(rug);
 
   // 먼 벽 — 창문 x2 + 커튼 + 라디에이터 + TV
   const frameMat=mat(0x22242a,.6,.3);
@@ -571,15 +605,15 @@ function build3D(){
     for(let s=0;s<13;s++) box(0.05,0.72,0.16,mat(0xb0ada3,.55,.15),wx-0.72+s*0.12,0.78,zF+0.17);
     box(1.7,0.06,0.2,mat(0xb0ada3,.55,.15),wx,1.16,zF+0.17);
   }
-  windowUnit(-2.15); windowUnit(2.15);
+  windowUnit(-2.6); windowUnit(2.6);
   box(1.5,0.88,0.09,mat(0x0b0b0c,.5,.3),0,2.15,zF+0.09);
   const tvdot=new THREE.Mesh(new THREE.SphereGeometry(0.02,8,8),new THREE.MeshBasicMaterial({color:0xff3b30}));
-  tvdot.position.set(0.62,1.8,zF+0.15);scene.add(tvdot);
+  tvdot.position.set(0.75,1.8,zF+0.15);scene.add(tvdot);
   // 벽시계 — 3시에 멈춤
   const clk=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,0.05,20),mat(0xe6e6de,.6));
-  clk.rotation.x=Math.PI/2;clk.position.set(-3.4,3.0,zF+0.06);scene.add(clk);
-  box(0.02,0.14,0.012,mat(0x111,1),-3.4,3.06,zF+0.03);
-  box(0.1,0.02,0.012,mat(0x111,1),-3.35,3.0,zF+0.03);
+  clk.rotation.x=Math.PI/2;clk.position.set(-4.1,3.0,zF+0.06);scene.add(clk);
+  box(0.02,0.14,0.012,mat(0x111,1),-4.1,3.06,zF+0.03);
+  box(0.1,0.02,0.012,mat(0x111,1),-4.05,3.0,zF+0.03);
 
   // 침대 (양쪽 벽) — 흰 프레임 + 군용 위장 관물
   function camoTex(){
@@ -611,7 +645,7 @@ function build3D(){
     box(0.5,0.12,W-0.22,pil,cx+wallSide*(L/2-0.32),0.74,cz,(Math.random()-.5)*0.08);
     box(0.68,0.48,0.52,bfMat,cx-wallSide*(L/2+0.42),0.24,cz);
   }
-  for(const cz of [-4.4,-1.0,2.6]){ bunk(-2.75,cz); bunk(2.75,cz); }
+  for(const cz of [-5.1,-1.16,3.0]){ bunk(-3.3,cz); bunk(3.3,cz); }
 
   // 관물대 (양쪽 벽) — 크림색 캐비닛 (한 대씩 색·자리가 미묘하게 다르다)
   function locker(x,z,interactive){
@@ -634,12 +668,12 @@ function build3D(){
     }
     return g;
   }
-  locker(-3.7,-6.0); locker(3.7,-6.0); locker(3.7,0.8); locker(-3.7,5.4); locker(3.7,5.4);
-  const iLocker=locker(-3.7,0.8,true);
-  reg(iLocker,{id:"locker",label:"관물대",sub:"자물쇠가 걸려 있다",cam:[-1.7,1.7,0.8],tgt:[-3.4,1.6,0.8]});
+  locker(-4.48,-6.95); locker(4.48,-6.95); locker(4.48,0.93); locker(-4.48,6.26); locker(4.48,6.26);
+  const iLocker=locker(-4.48,0.93,true);
+  reg(iLocker,{id:"locker",label:"관물대",sub:"자물쇠가 걸려 있다",cam:[-2.1,1.7,0.93],tgt:[-4.4,1.6,0.93]});
 
   // 불침번 데스크 (출입구 쪽) — 근무표 + 무전기 + 스탠드
-  const dx=-1.2, dz=5.6;
+  const dx=-1.45, dz=6.5;
   const woodTex=noiseTex(256,256,"#5a4a32",["#6b5940","#4a3c28","#63523a"],{n:8,size:70,alpha:.1,grain:22,speckle:6});
   box(1.5,0.08,0.75,new THREE.MeshStandardMaterial({map:woodTex,roughness:.6,metalness:.1}),dx,1.0,dz);
   for(const sx of [-1,1])for(const sz of [-1,1]) box(0.07,1.0,0.07,mat(0x372c1e,.7),dx+sx*0.66,0.5,dz+sz*0.3);
@@ -669,31 +703,31 @@ function build3D(){
   // 보안함 (출입문 옆 벽) — 4자리 잠금
   const safe=new THREE.Mesh(rbox(0.6,0.7,0.26,0.03),
     new THREE.MeshStandardMaterial({color:0x3a4a35,metalness:.5,roughness:.5,emissive:0xd8b45a,emissiveIntensity:.3}));
-  safe.position.set(0.4,1.5,zN-0.16);safe.castShadow=true;scene.add(safe);
+  safe.position.set(0.48,1.5,zN-0.16);safe.castShadow=true;scene.add(safe);
   const dial=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,0.05,18),mat(0xcfcabb,.25,.85));
-  dial.rotation.x=Math.PI/2;dial.position.set(0.4,1.45,zN-0.30);scene.add(dial);
-  reg(safe,{id:"safe",label:"보안함",sub:"4자리 · 단서 필요",cam:[0.4,1.55,zN-2.0],tgt:[0.4,1.5,zN-0.16]});
+  dial.rotation.x=Math.PI/2;dial.position.set(0.48,1.45,zN-0.30);scene.add(dial);
+  reg(safe,{id:"safe",label:"보안함",sub:"4자리 · 단서 필요",cam:[0.48,1.55,zN-2.32],tgt:[0.48,1.5,zN-0.16]});
 
   // 출입문 (near wall)
   const door=new THREE.Mesh(rbox(1.3,2.7,0.14,0.04),
     new THREE.MeshStandardMaterial({color:0x39403a,roughness:.65,metalness:.25,emissive:0xd8b45a,emissiveIntensity:.32}));
-  door.position.set(2.6,1.35,zN-0.06);door.castShadow=true;scene.add(door);
-  box(1.62,0.14,0.16,frameMat,2.6,2.78,zN-0.02);
-  box(0.16,2.92,0.16,frameMat,1.72,1.46,zN-0.02);
-  box(0.16,2.92,0.16,frameMat,3.48,1.46,zN-0.02);
+  door.position.set(3.15,1.35,zN-0.06);door.castShadow=true;scene.add(door);
+  box(1.62,0.14,0.16,frameMat,3.15,2.78,zN-0.02);
+  box(0.16,2.92,0.16,frameMat,2.27,1.46,zN-0.02);
+  box(0.16,2.92,0.16,frameMat,4.03,1.46,zN-0.02);
   const knob=new THREE.Mesh(new THREE.SphereGeometry(0.055,12,12),mat(0xcfcabb,.25,.85));
-  knob.position.set(2.1,1.35,zN-0.16);scene.add(knob);
-  reg(door,{id:"door",label:"출입문",sub:"밖에서 잠겼다",cam:[2.6,1.5,zN-2.2],tgt:[2.6,1.35,zN-0.06]});
+  knob.position.set(2.65,1.35,zN-0.16);scene.add(knob);
+  reg(door,{id:"door",label:"출입문",sub:"밖에서 잠겼다",cam:[3.15,1.5,zN-2.55],tgt:[3.15,1.35,zN-0.06]});
   // 복도 빛샘
   const leak=new THREE.Mesh(new THREE.PlaneGeometry(1.1,0.05),new THREE.MeshBasicMaterial({color:0xffe0a8}));
-  leak.position.set(2.6,0.04,zN-0.15);leak.rotation.x=-Math.PI/2;scene.add(leak);
-  const leakL=new THREE.PointLight(0xffc878,0.5,4.5,2);leakL.position.set(2.6,0.5,zN-0.7);scene.add(leakL);
+  leak.position.set(3.15,0.04,zN-0.15);leak.rotation.x=-Math.PI/2;scene.add(leak);
+  const leakL=new THREE.PointLight(0xffc878,0.5,4.5,2);leakL.position.set(3.15,0.5,zN-0.7);scene.add(leakL);
 
   // 잔디테일 소품
   const ext=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,0.46,12),mat(0xa62b23,.5));
   ext.position.set(xR-0.2,0.5,zN-1.4);scene.add(ext);
-  box(1.1,0.75,0.05,mat(0x6a5a3c,.9),xL+0.04,2.2,-2.8,Math.PI/2);
-  for(let i=0;i<5;i++) box(0.02,0.24,0.19,mat(0xe6e4d8,.9),xL+0.08,2.36+((i*5)%2?-.28:.24),-3.3+i*0.28,Math.PI/2);
+  box(1.1,0.75,0.05,mat(0x6a5a3c,.9),xL+0.04,2.2,-3.25,Math.PI/2);
+  for(let i=0;i<5;i++) box(0.02,0.24,0.19,mat(0xe6e4d8,.9),xL+0.08,2.36+((i*5)%2?-.28:.24),-3.83+i*0.32,Math.PI/2);
   for(let i=0;i<4;i++) box(0.11,0.035,0.26,mat(i%2?0x35507e:0x2c4a2c,.9),xR-0.7-(i%2)*0.15,0.02,zN-1.0-((i/2)|0)*0.34);
   box(0.34,0.42,0.34,mat(0x2a2d26,.9),xL+0.35,0.21,zN-0.6); // 휴지통
 
@@ -783,6 +817,22 @@ function animate(){
     curTarget.lerpVectors(tween.t0,tween.t1,k);camera.lookAt(curTarget);
     if(tween.t>=1){tween.active=false;tween.done&&tween.done();}
   }else if(!focused){
+    if(!panelOpen){
+      let mf=0,ms=0;
+      if(keys.ArrowUp||keys.KeyW)mf+=1;
+      if(keys.ArrowDown||keys.KeyS)mf-=1;
+      if(keys.ArrowRight||keys.KeyD)ms+=1;
+      if(keys.ArrowLeft||keys.KeyA)ms-=1;
+      if(mf||ms){
+        const len=Math.hypot(mf,ms);mf/=len;ms/=len;
+        const fx=Math.sin(look.yaw),fz=Math.cos(look.yaw);
+        const rx=Math.sin(look.yaw+Math.PI/2),rz=Math.cos(look.yaw+Math.PI/2);
+        const spd=2.7*dt;
+        camAnchor.x=Math.max(ROOM.xMin,Math.min(ROOM.xMax,camAnchor.x+(fx*mf+rx*ms)*spd));
+        camAnchor.z=Math.max(ROOM.zMin,Math.min(ROOM.zMax,camAnchor.z+(fz*mf+rz*ms)*spd));
+        idle=0;
+      }
+    }
     idle+=dt;
     if(autoRotate&&!dragging&&idle>4&&!REDUCE)look.yaw+=dt*0.04;
     setCamFromSpherical();
@@ -799,7 +849,7 @@ function animate(){
     flickPanel.light.intensity=f*1.2;
   }
   if(shadowFig){
-    shadowFig.position.x=Math.sin(t*0.19)*2.6;
+    shadowFig.position.x=Math.sin(t*0.19)*3.1;
     shadowFig.material.opacity=Math.max(0,Math.sin(t*0.14))*0.32*(state.alert/150+0.26);
   }
   updateLabel();
@@ -843,8 +893,17 @@ addEventListener("pointerup",e=>{
 });
 mount.addEventListener("wheel",e=>{e.preventDefault();
   if(focused||panelOpen||tween.active)return;
-  camAnchor.z=Math.max(-6.2,Math.min(6.6,camAnchor.z+e.deltaY*0.006));
+  camAnchor.z=Math.max(ROOM.zMin,Math.min(ROOM.zMax,camAnchor.z+e.deltaY*0.006));
 },{passive:false});
+
+/* ---- 이동: 방향키·WASD ---- */
+const MOVE_KEYS=new Set(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","KeyW","KeyA","KeyS","KeyD"]);
+addEventListener("keydown",e=>{
+  if(!MOVE_KEYS.has(e.code))return;
+  keys[e.code]=true;idle=0;
+  if(!panelOpen)e.preventDefault();
+});
+addEventListener("keyup",e=>{ if(MOVE_KEYS.has(e.code))keys[e.code]=false; });
 
 /* ============================================================
    게임 상태
@@ -864,7 +923,7 @@ function startGame(){
     const r=Math.random();
     if(r<0.4)Sound.creak(); else if(r<0.7)Sound.whisper();
   },7000+Math.random()*6000);
-  toast("드래그해서 둘러보고, 빛나는 물체를 눌러 조사한다",2600);
+  toast("방향키(WASD)로 이동, 드래그로 둘러보며 조사한다",2600);
   refreshPips();
 }
 function tick(){
