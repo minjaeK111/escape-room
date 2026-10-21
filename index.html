@@ -53,6 +53,23 @@ body{font-family:var(--f-body);color:var(--text);background:#000;overflow:hidden
 .cluepips span.got{opacity:1;border-color:var(--brass)}
 .ins.mini{width:18px;height:18px;margin:0;display:inline-block;vertical-align:-4px;filter:none}
 
+#compass{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:min(340px,46vw);height:30px;overflow:hidden;
+  background:linear-gradient(90deg,transparent,rgba(7,9,5,.75) 20%,rgba(7,9,5,.75) 80%,transparent);
+  -webkit-mask:linear-gradient(90deg,transparent,#000 15%,#000 85%,transparent);mask:linear-gradient(90deg,transparent,#000 15%,#000 85%,transparent)}
+#compass::after{content:"";position:absolute;left:50%;top:0;width:2px;height:8px;margin-left:-1px;background:var(--brass-lite)}
+#compass span{position:absolute;top:7px;transform:translateX(-50%);font-family:var(--f-label);font-size:.8rem;letter-spacing:.1em;color:var(--text);line-height:1}
+#compass span.tick{top:4px;width:1px;height:6px;background:var(--muted);opacity:.6}
+#compass span.obj{top:5px;width:12px;height:12px;border:2px solid var(--brass);transform:translateX(-50%) rotate(45deg);box-shadow:0 0 8px rgba(216,180,90,.8)}
+#compass span.obj.hot{background:var(--brass)}
+#mbanner{position:fixed;left:50%;top:22%;transform:translateX(-50%);z-index:8;pointer-events:none;text-align:center;
+  padding:10px 34px;border-top:1px solid var(--brass);border-bottom:1px solid var(--brass);
+  background:linear-gradient(90deg,transparent,rgba(7,9,5,.85) 20%,rgba(7,9,5,.85) 80%,transparent);
+  animation:mb 2.4s ease-out forwards}
+#mbanner .mb-tag{display:block;font-family:var(--f-label);font-size:.72rem;letter-spacing:.3em;color:var(--green)}
+#mbanner b{font-family:var(--f-display);font-weight:400;font-size:1.5rem;color:var(--brass-lite);letter-spacing:.04em}
+@keyframes mb{0%{opacity:0;transform:translateX(-50%) scaleX(.6)}12%{opacity:1;transform:translateX(-50%) scaleX(1)}80%{opacity:1}100%{opacity:0}}
+.emblem{width:34px;height:34px;flex:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))}
+.mhead{display:flex;gap:10px;align-items:center;margin-bottom:6px}
 #tr{position:absolute;top:14px;right:16px;display:flex;flex-direction:column;align-items:flex-end;gap:9px}
 .clock{font-family:var(--f-label);font-weight:700;font-size:1.7rem;line-height:1;letter-spacing:.06em;
   color:var(--brass-lite);font-variant-numeric:tabular-nums;text-shadow:0 0 14px rgba(216,180,90,.35)}
@@ -297,12 +314,13 @@ body.postfx #vignette,body.postfx #grain{display:none}
 
 <div id="hud" hidden>
   <div id="mission">
-    <div class="hud-tag">작전 일지 · 03:07</div>
-    <div class="hud-mission">03생활관 · 불침번 실종</div>
+    <div class="mhead"><svg class="emblem" viewBox="0 0 40 40"><path d="M20 2 36 8v12c0 9-7 15-16 18C11 35 4 29 4 20V8z" fill="#2f4a31" stroke="#e9c85a" stroke-width="1.6"/><path d="M20 9l2.9 6.2 6.8.7-5.1 4.6 1.5 6.7L20 23.8l-6.1 3.4 1.5-6.7-5.1-4.6 6.8-.7z" fill="#e9c85a"/></svg>
+      <div><div class="hud-tag">ROK ARMY MP · 작전 일지</div><div class="hud-mission">03생활관 · 불침번 실종</div></div></div>
     <ul id="mlist"></ul>
   </div>
+  <div id="compass"></div>
   <div id="tr">
-    <div class="clock" id="clock">15:00</div>
+    <div class="clock" id="clock">10:00</div>
     <div class="alert-wrap">
       <div class="alert-label"><span>인기척</span><span id="alertNum">0</span></div>
       <div class="alert-bar"><div class="alert-fill" id="alertFill"></div></div>
@@ -316,6 +334,7 @@ body.postfx #vignette,body.postfx #grain{display:none}
   </div>
 </div>
 <div id="crosshair" hidden></div>
+<div id="mbanner" hidden></div>
 <div id="prompt"></div>
 <div id="inv" hidden></div>
 <div id="lockhint" hidden>화면을 클릭하면 시점이 마우스에 고정된다 · ESC로 해제</div>
@@ -335,8 +354,8 @@ body.postfx #vignette,body.postfx #grain{display:none}
     <p class="story-tag">ROK ARMY · 3D 방탈출 · 헌병 야간조사</p>
     <h1>새벽 3시,<br><em>03생활관</em></h1>
     <p>근무 교대 시각, 초소 근무자가 보고했다. &ldquo;03동에 불이 켜져 있는데 불침번이 안 나옵니다.&rdquo; 조사관인 네가 문을 열고 들어서자 — 문이 뒤에서 잠겼다.</p>
-    <p>단서는 서로 엮여 있다. 계급장·편제·무전 숫자·암구호를 모르면 못 푼다. 틀릴 때마다 복도의 <b>인기척</b>이 가까워진다. 세 번 문 앞까지 오면 끝.</p>
-    <p style="font-family:var(--f-label);letter-spacing:.08em;font-size:.8rem;color:var(--muted)">난이도<span class="diff"><b></b><b></b><b></b><b></b><b class="off"></b></span> &nbsp;·&nbsp; 제한시간 15:00 &nbsp;·&nbsp; 힌트 1회 −30초</p>
+    <p>게시판 → 관물대 → 근무표 → 무전기 → CCTV 순서로 단서를 모아 보안함을 열고, 수하를 통과해 나간다. 틀릴 때마다 복도의 <b>인기척</b>이 가까워진다. 세 번 문 앞까지 오면 끝.</p>
+    <p style="font-family:var(--f-label);letter-spacing:.08em;font-size:.8rem;color:var(--muted)">난이도<span class="diff"><b></b><b></b><b></b><b class="off"></b><b class="off"></b></span> &nbsp;·&nbsp; 제한시간 10:00 &nbsp;·&nbsp; 목표 5분 클리어 &nbsp;·&nbsp; 힌트 무료</p>
     <div class="controls" id="controls">
       <div><span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span> 이동</div>
       <div><span class="kbd">Shift</span> 달리기</div>
@@ -484,9 +503,9 @@ function nearest(r,k){
 const numWords=s=>s.split("").map(c=>NUMW[+c]).join(" · ");
 function genCase(){
   const owner=R(pick(["이등병","일병","상병"]));
-  const dia=pick([{l:"소위",d:1},{l:"중위",d:2},{l:"대위",d:3},{l:"중대장",d:3}]);
-  const flo=pick([{l:"소령",d:1},{l:"중령",d:2},{l:"대령",d:3},{l:"대대장",d:2},{l:"연대장",d:3}]);
-  const star=pick([{l:"준장",d:1},{l:"소장",d:2},{l:"중장",d:3},{l:"대장",d:4},{l:"사단장",d:2},{l:"군단장",d:3}]);
+  const dia=pick([{l:"소위",d:1},{l:"중위",d:2},{l:"대위",d:3}]);
+  const flo=pick([{l:"소령",d:1},{l:"중령",d:2},{l:"대령",d:3}]);
+  const star=pick([{l:"준장",d:1},{l:"소장",d:2},{l:"중장",d:3},{l:"대장",d:4},{l:"사단장",d:2}]);
   const freq=String(1+Math.random()*9|0)+[0,1,2].map(()=>Math.random()*10|0).join("");
   const pairs=shuffle(PW_PAIRS);
   return {owner,dia,flo,star,freq,
@@ -574,11 +593,11 @@ const FX_SHADER={
       vec2 uv=vUv;vec2 c=uv-.5;float d=length(c*vec2(1.25,1.));
       float ab=.0015+uAlert*.004+uHit*.014;
       vec3 col=vec3(texture2D(tDiffuse,uv+c*ab).r,texture2D(tDiffuse,uv).g,texture2D(tDiffuse,uv-c*ab).b);
-      float v=1.-smoothstep(.3,.82,d*(1.+uAlert*.22));
-      col*=mix(.12,1.,v);
+      float v=1.-smoothstep(.48,.98,d*(1.+uAlert*.22));
+      col*=mix(.5,1.,v);
       float pulse=uAlert*uAlert*(.55+.45*sin(uTime*5.));
       col=mix(col,col*vec3(1.4,.6,.55),pulse*.5*(1.-v*.5));
-      col+=(h(uv*vec2(913.,577.)+fract(uTime*7.3))-.5)*.05;
+      col+=(h(uv*vec2(913.,577.)+fract(uTime*7.3))-.5)*.03;
       col=mix(col,vec3(.85,.08,.06),uHit*.28);
       gl_FragColor=vec4(col,1.);
     }`
@@ -589,12 +608,12 @@ function build3D(){
   renderer.setSize(innerWidth,innerHeight);
   renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   renderer.outputEncoding=THREE.sRGBEncoding;
-  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.22;
   mount.appendChild(renderer.domElement);
 
   scene=new THREE.Scene();
   scene.background=new THREE.Color(0x07090c);
-  scene.fog=new THREE.FogExp2(0x07090c,0.045);
+  scene.fog=new THREE.FogExp2(0x0a0d10,0.022);
 
   camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,0.05,100);
 
@@ -693,7 +712,7 @@ function build3D(){
 
   // 천장 형광등 — 야간엔 대부분 소등, 취침등 1개 + 1개 깜빡
   for(let cx=-1;cx<=1;cx++) for(let pz=-2;pz<=2;pz++){
-    const on=(cx===0&&pz===-2), flick=(cx===1&&pz===1);
+    const on=(cx===0&&(pz===-2||pz===0||pz===2)), flick=(cx===1&&pz===1);
     const m=new THREE.MeshStandardMaterial({color:0xdcdde0,
       emissive: on?0xe6ecf4:(flick?0x2a2d33:0x161719), emissiveIntensity: on?1.3:(flick?.3:0)});
     const p=new THREE.Mesh(new THREE.BoxGeometry(1.0,0.05,2.0),m);
@@ -706,17 +725,17 @@ function build3D(){
   dome.rotation.x=Math.PI;dome.position.set(0,RH-0.02,2.3);scene.add(dome);
 
   // 조명 — 어둡게, 손전등이 주인공
-  scene.add(new THREE.HemisphereLight(0x2b3452,0x171208,0.2));
-  const moon=new THREE.DirectionalLight(0xa9c6ee,0.62);
+  scene.add(new THREE.HemisphereLight(0x3d4a66,0x2a2416,0.6));
+  const moon=new THREE.DirectionalLight(0xa9c6ee,0.9);
   moon.position.set(1.8,5.4,zF-5.8);moon.target.position.set(0,1,zF+4.6);
   moon.castShadow=true;moon.shadow.mapSize.set(2048,2048);
   moon.shadow.camera.left=-9.5;moon.shadow.camera.right=9.5;moon.shadow.camera.top=9.5;moon.shadow.camera.bottom=-9.5;moon.shadow.camera.far=36;
   scene.add(moon,moon.target);
-  const fill=new THREE.PointLight(0x8492a6,0.16,20,2);fill.position.set(0,3.4,1.2);scene.add(fill);
+  const fill=new THREE.PointLight(0x9aa6b8,0.55,24,2);fill.position.set(0,3.4,1.2);scene.add(fill);
   const rim=new THREE.PointLight(0xffcf9e,0.24,10,2);rim.position.set(3.6,2.6,zN-1.5);scene.add(rim);
 
   // 손전등 — 카메라를 살짝 늦게 따라온다
-  flash=new THREE.SpotLight(0xfff0d8,2.6,15,0.42,0.55,1.3);
+  flash=new THREE.SpotLight(0xfff0d8,1.9,16,0.52,0.55,1.6);
   flash.castShadow=true;flash.shadow.mapSize.set(1024,1024);flash.shadow.bias=-0.0008;flash.shadow.camera.near=0.1;
   scene.add(flash,flash.target);
 
@@ -917,6 +936,106 @@ function build3D(){
     new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0,depthWrite:false}));
   shadowFig.position.set(0,1.9,zF+0.55);shadowFig.userData.noRay=true;scene.add(shadowFig);
 
+  // ==== 군 생활관 소품 — 태극기·육군기·구호 현수막·총기함·철모·군화·정훈 포스터 ====
+  function canvasPlane(w,h,draw,x,y,z,ry){
+    const c=document.createElement("canvas");c.width=512;c.height=Math.round(512*h/w);const g=c.getContext("2d");
+    draw(g,c.width,c.height);
+    const t=new THREE.CanvasTexture(c);t.anisotropy=4;
+    const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({map:t,roughness:.9}));
+    m.position.set(x,y,z);if(ry)m.rotation.y=ry;m.receiveShadow=true;m.castShadow=false;scene.add(m);return m;
+  }
+  function flagTaegeuk(g,w,h){
+    g.fillStyle="#f2efe6";g.fillRect(0,0,w,h);
+    const cx=w/2,cy=h/2,r=h*0.25;
+    g.save();g.translate(cx,cy);g.rotate(-Math.PI/5.5);
+    g.fillStyle="#cd2e3a";g.beginPath();g.arc(0,0,r,Math.PI,0);g.fill();
+    g.fillStyle="#0047a0";g.beginPath();g.arc(0,0,r,0,Math.PI);g.fill();
+    g.fillStyle="#cd2e3a";g.beginPath();g.arc(-r/2,0,r/2,0,Math.PI*2);g.fill();
+    g.fillStyle="#0047a0";g.beginPath();g.arc(r/2,0,r/2,0,Math.PI*2);g.fill();
+    g.restore();
+    g.fillStyle="#111";const bw=h*0.09,bh=h*0.035;
+    const tri=(ox,oy,ang,pat)=>{g.save();g.translate(ox,oy);g.rotate(ang);
+      pat.forEach((row,i)=>{const yy=(i-1)*(bh*1.9);if(row===1)g.fillRect(-bw*1.5,yy-bh/2,bw*3,bh);
+        else{g.fillRect(-bw*1.5,yy-bh/2,bw*1.35,bh);g.fillRect(bw*0.15,yy-bh/2,bw*1.35,bh);}});g.restore();};
+    const d=h*0.42;
+    tri(cx-d*1.1,cy-d*0.72,-Math.PI/5.5+Math.PI/2,[1,1,1]);
+    tri(cx+d*1.1,cy+d*0.72,-Math.PI/5.5+Math.PI/2,[2,2,2]);
+    tri(cx+d*1.1,cy-d*0.72,Math.PI/5.5+Math.PI/2,[2,1,2]);
+    tri(cx-d*1.1,cy+d*0.72,Math.PI/5.5+Math.PI/2,[1,2,1]);
+  }
+  function flagArmy(g,w,h){
+    g.fillStyle="#2f5a35";g.fillRect(0,0,w,h);
+    g.strokeStyle="#e9c85a";g.lineWidth=10;g.strokeRect(14,14,w-28,h-28);
+    g.fillStyle="#e9c85a";const cx=w/2,cy=h*0.42,R=h*0.26;
+    g.beginPath();for(let k=0;k<10;k++){const r=k%2?R*.42:R,a=Math.PI/5*k-Math.PI/2;g.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));}g.closePath();g.fill();
+    g.font=`bold ${h*0.17|0}px "Black Han Sans","Noto Sans KR",sans-serif`;g.textAlign="center";g.fillText("대한민국 육군",cx,h*0.9);
+  }
+  function banner(text,bg,fg){return (g,w,h)=>{
+    g.fillStyle=bg;g.fillRect(0,0,w,h);
+    g.strokeStyle=fg;g.lineWidth=6;g.strokeRect(10,10,w-20,h-20);
+    g.fillStyle=fg;g.font=`bold ${h*0.52|0}px "Black Han Sans","Noto Sans KR",sans-serif`;g.textAlign="center";g.textBaseline="middle";
+    g.fillText(text,w/2,h/2+4);
+  };}
+  function poster(title,lines,bg){return (g,w,h)=>{
+    g.fillStyle=bg;g.fillRect(0,0,w,h);
+    g.fillStyle="rgba(0,0,0,.25)";g.fillRect(0,0,w,h*0.22);
+    g.fillStyle="#f3e9c8";g.font=`bold ${h*0.11|0}px "Black Han Sans","Noto Sans KR",sans-serif`;g.textAlign="center";g.fillText(title,w/2,h*0.15);
+    g.font=`${h*0.06|0}px "Noto Sans KR",sans-serif`;g.fillStyle="#e8e3cf";
+    lines.forEach((l,i)=>g.fillText(l,w/2,h*0.36+i*h*0.11));
+    g.strokeStyle="#e9c85a";g.lineWidth=4;g.strokeRect(16,16,w-32,h-32);
+  };}
+  // 먼 벽 — TV 양옆 태극기 / 육군기, 그 위 구호
+  canvasPlane(0.7,0.47,flagTaegeuk,-1.18,2.2,zF+0.03);
+  canvasPlane(0.7,0.47,flagArmy,1.18,2.2,zF+0.03);
+  for(const fx of [-1.18,1.18]){box(0.78,0.03,0.03,mat(0x3a3a3a,.5,.5),fx,2.46,zF+0.05);}
+  canvasPlane(2.2,0.4,banner("필승 · 단결 · 충성","#1f3a24","#f1cf5e"),0,3.5,zF+0.03);
+  // 출입문 쪽 벽 — 생활관 명패 + 구호
+  canvasPlane(1.2,0.28,banner("03 생활관","#15181a","#e8e3cf"),1.0,2.55,zN-0.03,Math.PI);
+  canvasPlane(2.6,0.45,banner("정신전력 · 전투준비","#4a2a2a","#f1d9a0"),-2.6,3.3,zN-0.03,Math.PI);
+  // 측벽 정훈 포스터
+  canvasPlane(0.7,1.0,poster("정신전력",["계급장은 모양→개수","상급자에게 먼저 경례","무전 숫자는 군 호칭"],"#2f4a31"),xL+0.03,2.3,-0.6,Math.PI/2);
+  canvasPlane(0.7,1.0,poster("수하 절차",["정지! → 멈추고 손 들기","누구냐? → 신분 밝히기","문어 → 답어로 응답"],"#3a3a2a"),xR-0.03,2.3,-0.6,-Math.PI/2);
+  canvasPlane(0.7,1.0,poster("경계근무",["불침번 2400-0600","1시간 교대","이상 시 즉시 보고"],"#2a3344"),xR-0.03,2.3,3.4,-Math.PI/2);
+  // 총기함 (오른쪽 벽) — 소총 5정
+  {
+    const gx=xR-0.26, gz=-3.25;
+    const rackM=mat(0x2c3b2a,.6,.2), rackD=mat(0x1a241a,.5);
+    box(0.04,1.9,1.3,rackM,xR-0.04,0.95,gz);                 // 뒷판
+    box(0.5,1.9,0.04,rackM,gx,0.95,gz-0.65);                 // 옆판
+    box(0.5,1.9,0.04,rackM,gx,0.95,gz+0.65);
+    box(0.5,0.05,1.3,rackD,gx,1.88,gz);                      // 상판
+    box(0.5,0.05,1.3,rackD,gx,0.03,gz);                      // 하판
+    box(0.46,0.04,1.22,rackD,gx,0.62,gz);                    // 총기 받침
+    box(0.04,0.12,1.22,mat(0xe6cf5a,.6),xR-0.04,1.6,gz);     // "총기함" 노란 띠
+    const gun=mat(0x1b1d1a,.45,.5), stock=mat(0x3a3326,.7);
+    for(let i=0;i<5;i++){
+      const z=gz-0.46+i*0.23, x=xR-0.2;
+      box(0.05,0.95,0.05,gun,x,1.1,z);                        // 총열/몸통
+      box(0.07,0.3,0.09,stock,x,0.78,z);                      // 개머리판
+      box(0.05,0.2,0.05,gun,x+0.04,1.2,z-0.05);               // 탄창
+      box(0.03,0.42,0.03,gun,x,1.6,z);                        // 총열 상단
+    }
+    box(0.1,0.12,0.14,new THREE.MeshStandardMaterial({color:0x5a4a1e,metalness:.6,roughness:.4}),gx-0.22,1.0,gz+0.66);
+    solid(gx-0.3,gx+0.3,gz-0.65,gz+0.65);
+  }
+  // 철모 (풋로커 위) + 군화 (침대 옆)
+  const helmetMat=mat(0x3d4a2e,.8), bootMat=mat(0x1a1612,.55,.1);
+  for(const cz of [-5.1,-1.16,3.0]) for(const sx of [-1,1]){
+    const cx=sx*3.3, wallSide=sx, fl=cx-wallSide*(1.0+0.42);
+    const hm=new THREE.Mesh(new THREE.SphereGeometry(0.15,14,10,0,Math.PI*2,0,Math.PI/2),helmetMat);
+    hm.position.set(fl+(Math.random()-.5)*.1,0.48,cz+(Math.random()-.5)*.1);hm.rotation.y=Math.random()*3;hm.castShadow=true;scene.add(hm);
+    const bz=cz+0.62;
+    for(const o of [-0.08,0.08]){box(0.1,0.18,0.26,bootMat,cx-wallSide*0.4+o,0.09,bz,(Math.random()-.5)*.2);}
+  }
+  // 관물대 위 모자 / 방독면 가방
+  for(const [lx,lz] of [[-4.48,-6.95],[4.48,-6.95],[4.48,6.26],[-4.48,6.26]]){
+    box(0.26,0.1,0.26,mat(0x3d4a2e,.9),lx,3.36,lz);
+    const bag=box(0.22,0.3,0.14,mat(0x2e3a26,.95),lx+(lx<0?0.4:-0.4),2.2,lz+0.3);
+  }
+  // 바닥 선 테이프 (통로 경계)
+  for(const sx of [-1,1]){const tape=new THREE.Mesh(new THREE.PlaneGeometry(0.05,RD-1.4),new THREE.MeshStandardMaterial({color:0xe6cf5a,roughness:.6}));
+    tape.rotation.x=-Math.PI/2;tape.position.set(sx*1.25+0.15,0.013,-0.4);scene.add(tape);}
+
   // 단서 위치의 미세한 반짝임
   const gt=glowTex();
   for(const o of interactables){
@@ -937,7 +1056,7 @@ function setupPost(){
     composer.setPixelRatio(Math.min(devicePixelRatio,1.5));
     composer.setSize(innerWidth,innerHeight);
     composer.addPass(new THREE.RenderPass(scene,camera));
-    composer.addPass(new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),0.75,0.6,0.72));
+    composer.addPass(new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),0.32,0.5,0.88));
     fxPass=new THREE.ShaderPass(FX_SHADER);composer.addPass(fxPass);
     document.body.classList.add("postfx");
   }catch(e){composer=null;fxPass=null;}
@@ -1041,6 +1160,19 @@ function updateAim(){
   }
 }
 function interact(){ if(aimed&&!aimFar)tryOpen(aimed); }
+const CARD=[["N",0],["E",Math.PI/2],["S",Math.PI],["W",-Math.PI/2]];
+function updateCompass(){
+  const C=document.getElementById("compass");if(!state.started||state.ended){C.innerHTML="";return;}
+  const FOV=1.3,yaw=look.yaw;let h="";
+  const place=(a,cls,txt)=>{let d=a-yaw;d=Math.atan2(Math.sin(d),Math.cos(d));if(Math.abs(d)>FOV)return;
+    h+=`<span class="${cls}" style="left:${50+d/FOV*50}%">${txt||""}</span>`;};
+  for(const [n,a] of CARD){place(a,"",n);for(let k=1;k<4;k++)place(a+k*Math.PI/8,"tick");}
+  const pt=primaryTarget();
+  if(pt){const o=interactables.find(x=>x.userData.id===pt);
+    if(o){const t=o.userData.camTarget,a=Math.atan2(t.x-camAnchor.x,t.z-camAnchor.z);
+      place(a,"obj"+(o===aimed?" hot":""));}}
+  C.innerHTML=h;
+}
 
 const clock=new THREE.Clock();
 const _v1=new THREE.Vector3(),_v2=new THREE.Vector3(),flashAim=new THREE.Vector3(0,1.4,0);
@@ -1060,7 +1192,7 @@ function animate(){
     if(!state.started&&!REDUCE){look.yaw=Math.sin(t*.11)*.42;look.pitch=.03+Math.sin(t*.17)*.05;}
     setCam(t);
   }else{camera.lookAt(curTarget);}
-  if(frameN%2===0)updateAim();
+  if(frameN%2===0){updateAim();updateCompass();}
 
   // 손전등: 시선보다 살짝 늦게 따라와 손에 든 느낌
   if(flash){
@@ -1070,7 +1202,7 @@ function animate(){
     const aimTo=camera.position.clone().addScaledVector(_v1,6);
     flashAim.lerp(aimTo,1-Math.pow(0.00002,dt));
     flash.target.position.copy(flashAim);
-    const fi=flashOn?(2.6+(Math.random()<0.006?-1.8:0)):0;
+    const fi=flashOn?(1.9+(Math.random()<0.006?-1.2:0)):0;
     flash.intensity+=(fi-flash.intensity)*.35;
   }
   for(const o of interactables){
@@ -1218,7 +1350,7 @@ addEventListener("blur",()=>{for(const k in keys)keys[k]=false;});
 /* ============================================================
    게임 상태 / HUD
    ============================================================ */
-const state={alert:0,busts:0,timeLeft:900,timer:null,ambient:null,ended:false,started:false,hints:0,hintUsed:{},
+const state={alert:0,busts:0,timeLeft:600,timer:null,ambient:null,ended:false,started:false,hints:0,hintUsed:{},
   solved:{board:false,locker:false,roster:false,radio:false,cctv:false,safe:false,door:false},
   clues:{bar:false,dia:false,flo:false,star:false},inv:new Set(),notes:[],recap:{}};
 const ITEMS=[["manual","교범"],["tag","인식표"],["freq","주파수"],["pw","암구호"],["key","열쇠"]];
@@ -1238,7 +1370,7 @@ function startGame(){
   },7000+Math.random()*5000);
   refreshHUD();renderInv();updateLockHint();
   requestLock();
-  toast(IS_TOUCH?"왼쪽 스틱으로 이동, 화면을 끌어 둘러본다":"게시판부터 찾아라 — 손전등은 F",3000);
+  toast(IS_TOUCH?"왼쪽 스틱으로 이동, 화면을 끌어 둘러본다":"나침반의 ◆ 가 다음 목표다 — 게시판부터",3200);setTimeout(()=>banner("불침번 실종 조사","MISSION START"),400);
 }
 function fmt(s){s=Math.max(0,s);return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");}
 function tick(){
@@ -1320,14 +1452,14 @@ const panel=document.getElementById("panel"),panelCard=document.getElementById("
 function openPanel(eyebrow,html,hint){
   const used=hint&&state.hintUsed[hint.id];
   panelCard.innerHTML=`<div class="ph"><span class="panel-eyebrow">${eyebrow}</span><div class="ph-btns">
-    ${hint?`<button class="x-btn hint" id="hintBtn" type="button"${used?" disabled":""}>${used?"힌트 사용됨":"힌트 −30초"}</button>`:""}
+    ${hint?`<button class="x-btn hint" id="hintBtn" type="button"${used?" disabled":""}>${used?"힌트 표시됨":"힌트 보기"}</button>`:""}
     <button class="x-btn" id="xBtn" type="button">닫기 ✕</button></div></div>${html}${hint?`<div id="hintBox">${used?hint.text:""}</div>`:""}`;
   panel.classList.add("open");panelOpen=true;updateLockHint();
   document.getElementById("xBtn").onclick=closePanel;
   if(hint&&!used)document.getElementById("hintBtn").onclick=()=>{
-    state.hintUsed[hint.id]=true;state.hints++;state.timeLeft=Math.max(1,state.timeLeft-30);tick();state.timeLeft++;
+    state.hintUsed[hint.id]=true;state.hints++;
     Sound.click();document.getElementById("hintBox").innerHTML=hint.text;
-    const b=document.getElementById("hintBtn");b.disabled=true;b.textContent="힌트 사용됨";
+    const b=document.getElementById("hintBtn");b.disabled=true;b.textContent="힌트 표시됨";
   };
 }
 function closePanel(){
@@ -1346,8 +1478,15 @@ function wrong(n,el){
 function openPuzzle(id){
   ({board:puzBoard,locker:puzLocker,roster:puzRoster,radio:puzRadio,cctv:puzCctv,safe:puzSafe,door:puzDoor})[id]();
 }
+function banner(text,tag){
+  const b=document.getElementById("mbanner");b.hidden=false;b.innerHTML=`<span class="mb-tag">${tag||"OBJECTIVE COMPLETE"}</span><b>${text}</b>`;
+  b.style.animation="none";void b.offsetWidth;b.style.animation="";clearTimeout(b._t);b._t=setTimeout(()=>b.hidden=true,2500);
+}
+const ORDER=["board","locker","roster","radio","cctv","safe","door"];
+function primaryTarget(){return ORDER.find(k=>!state.solved[k])||null;}
 function markSolved(id,recap){
   state.solved[id]=true;if(recap)state.recap[id]=recap;
+  if(id!=="door")banner(MK[id]+" 조사 완료");
   const m=interactables.find(o=>o.userData.id===id);if(m)m.userData.solved=true;
   refreshHUD();
 }
@@ -1392,12 +1531,11 @@ function puzBoard(){
 
 /* --- 관물대: 이름 없는 계급장 7개 서열 정렬 --- */
 function puzLocker(){
-  let set=[0,1,2,3,4].map(g=>pick(RANKS.filter(r=>r.g===g)));
-  set=shuffle(set.concat(shuffle(RANKS.filter(r=>!set.includes(r))).slice(0,2)));
+  const set=shuffle([0,1,2,3,4].map(g=>pick(RANKS.filter(r=>r.g===g))));
   const order=set.slice().sort((a,b)=>a.i-b.i);let k=0;
   openPanel("관물대 · 계급장 다이얼",`
     <h2>낮은 계급부터 꽂아라</h2>
-    <p class="sub">자물쇠 둘레에 홈 일곱 개. 바닥에 뜯긴 계급장이 흩어져 있다. 이름표는 없다 — <b>모양과 개수</b>로만 판단한다.</p>
+    <p class="sub">자물쇠 둘레에 홈 다섯 개. 바닥에 뜯긴 계급장 다섯. 이름표는 없다 — <b>모양</b>으로 판단한다. (갈매기 → 굵은 V → 마름모 → 무궁화 → 별)</p>
     <div class="slots" id="sl">${set.map((_,i)=>`<div class="slot">${i+1}</div>`).join("")}</div>
     <div class="pool" id="pl">${set.map((r,i)=>`<button class="token" type="button" data-i="${i}">${rIns(r)}<span class="t-sub">?</span></button>`).join("")}</div>
     <div id="fb"></div>`,
@@ -1405,7 +1543,7 @@ function puzLocker(){
   const slots=[...panelCard.querySelectorAll("#sl .slot")];
   panelCard.querySelectorAll("#pl .token").forEach(b=>b.onclick=()=>{
     const r=set[+b.dataset.i];
-    if(r!==order[k]){wrong(8,b);return;}
+    if(r!==order[k]){wrong(5,b);return;}
     Sound.click();b.disabled=true;slots[k].classList.add("filled");slots[k].innerHTML=rIns(r);k++;
     if(k<order.length)return;
     Sound.ok();
@@ -1424,12 +1562,12 @@ function puzLocker(){
 
 /* --- 근무표: 부대 ↔ 지휘관 계급장 매칭 --- */
 function puzRoster(){
-  const units=shuffle(TITLES);
-  const badges=shuffle(["대위","중령","대령","소장","중장","소령","준장","중위"].map(R));
+  const units=shuffle(TITLES.filter(t=>["중대","대대","사단"].includes(t.u)));
+  const badges=shuffle(["대위","중령","소장","대령","준장"].map(R));
   let k=0;
   openPanel("불침번 근무표 · 결재란",`
     <h2>결재란의 계급장을 채워라</h2>
-    <p class="sub">근무표 뒷장이 결재란으로 잠겨 있다. 각 부대 <b>지휘관의 계급장</b>을 차례로 붙여라. 남는 계급장도 있다.</p>
+    <p class="sub">근무표 뒷장이 결재란으로 잠겨 있다. 각 부대 <b>지휘관의 계급장</b>을 차례로 붙여라. (중대장 대위 · 대대장 중령 · 사단장 소장) 남는 계급장도 있다.</p>
     <div class="roster" id="rs">${units.map((u,i)=>`<div class="rrow${i?"":" act"}"><span class="ru">${u.u}</span><span class="rt">${u.t} 결재</span><span class="rb">?</span></div>`).join("")}</div>
     <div class="pool" id="pl">${badges.map((r,i)=>`<button class="token" type="button" data-i="${i}">${rIns(r)}</button>`).join("")}</div>
     <div id="fb"></div>`,
@@ -1437,7 +1575,7 @@ function puzRoster(){
   const rows=[...panelCard.querySelectorAll("#rs .rrow")];
   panelCard.querySelectorAll("#pl .token").forEach(b=>b.onclick=()=>{
     const r=badges[+b.dataset.i];
-    if(r.name!==units[k].r){wrong(8,b);return;}
+    if(r.name!==units[k].r){wrong(5,b);return;}
     Sound.stamp();b.disabled=true;
     rows[k].classList.remove("act");rows[k].classList.add("done");rows[k].querySelector(".rb").innerHTML=rIns(r);
     k++;if(k<units.length){rows[k].classList.add("act");return;}
@@ -1460,12 +1598,13 @@ function puzRoster(){
 /* --- 무전기: 주파수 맞추기 → 교신 청취 --- */
 function puzRadio(){
   const kp=keypad(4,code=>{
-    if(code!==CASE.freq){Sound.static(.6);wrong(7);$("#st").textContent="치지직— 잡음뿐이다. ("+code+")";return false;}
+    if(code!==CASE.freq){Sound.static(.6);wrong(5);$("#st").textContent="치지직— 잡음뿐이다. ("+code+")";return false;}
     Sound.ok();setTimeout(playMsg,350);return true;
   });
   openPanel("야전 무전기 · 주파수",`
     <h2>주파수를 맞춰라</h2>
     <p class="sub">${state.inv.has("freq")?"근무표 뒷면에 적힌 주파수가 있다. 숫자로 바꿔 입력한다.":"어느 주파수인지 모른다. 어딘가에 적혀 있을 것이다."}</p>
+    <table class="unit-table" style="margin-bottom:10px"><tr>${NUMW.map((_,i)=>`<th style="text-align:center">${i}</th>`).join("")}</tr><tr>${NUMW.map(w=>`<td style="text-align:center">${w}</td>`).join("")}</tr></table>
     ${kp.html}<p class="verdict" id="st" style="text-align:center">대기 중…</p>`,
     {id:"radio",text:"군 무전 숫자 호칭: 공(0) · 하나(1) · 둘(2) · 삼(3) · 넷(4) · 오(5) · 여섯(6) · 칠(7) · 팔(8) · 아홉(9). 근무표 뒷면의 주파수를 이 표로 바꾼다."});
   kp.wire();
@@ -1511,7 +1650,7 @@ function playMsg(){
 /* --- CCTV: 위병소 검문 녹화 판정 (매 판 무작위) --- */
 function genGate(){
   const out=[];
-  for(const ty of shuffle(["claim","claim","id","id","cmp","absurd"])){
+  for(const ty of shuffle(["claim","id","cmp"])){
     if(ty==="claim"){
       const T=pick(TITLES),truth=Math.random()<.5;let r=R(T.r);
       if(!truth)r=pick(RANKS.filter(x=>x!==r&&Math.abs(x.i-r.i)<=2));
@@ -1567,7 +1706,7 @@ function puzCctv(){
           <div class="btn-row"><button class="btn" id="nx" type="button">${last?"녹화 종료":"다음 녹화"}</button></div>`;
         $("#nx").onclick=()=>{i++;last?done():draw();};
       }else{
-        c.classList.add("no");c.disabled=true;first=false;wrong(9);
+        c.classList.add("no");c.disabled=true;first=false;wrong(6);
         $("#fb").innerHTML=`<p class="verdict bad">${v.bad}</p>`;
       }
     });
@@ -1576,7 +1715,7 @@ function puzCctv(){
     Sound.ok();
     const riddle=`${symIcon("star")} 칸 = <b>${CASE.star.l}</b>의 별 수.`;
     openPanel("CCTV · 녹화 종료",`
-      <h2>${score===G.length?"완벽한 판정":score>=4?"몇 번 헷갈렸지만 통과":"아슬아슬했다"}</h2>
+      <h2>${score===G.length?"완벽한 판정":score>=2?"몇 번 헷갈렸지만 통과":"아슬아슬했다"}</h2>
       <p class="sub">첫 판정 정확 ${score} / ${G.length}. 마지막 프레임 — 위병소 칠판에 분필 글씨가 비친다.</p>
       <div class="note">&ldquo;${riddle}&rdquo;</div>
       <div class="btn-row"><button class="btn" id="dn" type="button">수첩에 적는다</button></div>`);
@@ -1593,7 +1732,7 @@ function puzSafe(){
   const n=Object.values(state.clues).filter(Boolean).length;
   const kp=keypad(4,code=>{
     if(code!==CASE.code){
-      wrong(12);$("#st").textContent="삐— 오류. 다이얼이 원위치로 돌아간다.";return false;
+      wrong(8);$("#st").textContent="삐— 오류. 다이얼이 원위치로 돌아간다.";return false;
     }
     Sound.ok();
     $("#fb").innerHTML=`<div class="note"><b>덜컹.</b> 문서 대신 빛바랜 사진 한 장과 열쇠. 사진 뒷면 — &ldquo;03생활관, 폐쇄. 19XX 화재.&rdquo;</div>
@@ -1610,7 +1749,9 @@ function puzSafe(){
     <h2>표지 넷, 숫자 넷</h2>
     <p class="sub">문짝에 네 표지가 <b>뒤섞여</b> 새겨져 있다. 다이얼 옆 각인 — &ldquo;<b>서열이 낮은 표지부터.</b>&rdquo; ${n<4?`<span style="color:var(--red)">(단서 ${n}/4 — 아직 부족하다)</span>`:""}</p>
     <div class="plate">${shuffle(["star","bar","flo","dia"]).map(symIcon).join("")}</div>
-    ${kp.html}<p class="verdict" id="st" style="text-align:center">수첩(Q)의 단서를 숫자로 바꿔라.</p><div id="fb"></div>`,
+    <ul class="nb-list" style="margin:10px 0">${["bar","dia","flo","star"].map(k=>{const n=state.notes.find(x=>x.key===k);return `<li>${n?n.html:`${symIcon(k)} <span style="color:var(--muted)">아직 모르는 단서</span>`}</li>`;}).join("")}</ul>
+    <p class="verdict" style="text-align:center;margin:0 0 6px">입력 순서: ${["bar","dia","flo","star"].map(symIcon).join(" → ")}</p>
+    ${kp.html}<p class="verdict" id="st" style="text-align:center">단서를 숫자 하나씩으로 바꿔라.</p><div id="fb"></div>`,
     {id:"safe",text:"서열: 갈매기(병) &lt; 마름모(위관) &lt; 무궁화(영관) &lt; 별(장성). 각 단서를 숫자 하나로 계산해 이 순서로 누른다. 예) 직책이 나오면 먼저 계급으로 바꾼다 — 사단장 = 소장 = 별 둘."});
   kp.wire();
 }
@@ -1626,21 +1767,18 @@ function puzDoor(){
     {q:`“누구냐!” — “헌병 조사관입니다.” 잠깐의 침묵. 그리고 문 너머의 목소리: <b>“${A}!”</b>`,
      opts:shuffle([[B,1],[A,0],[CASE.decoys[0],0],[CASE.decoys[1],0]]).map(([w,c])=>[`“${w}!”`,c]),
      ok:`문어 ‘${A}’에는 답어 ‘${B}’.`},
-    {q:"“…손전등 비춰 봐. 계급장 보인다. <b>네 계급, 복창!</b>”",
-     opts:shuffle([CASE.me,...nearest(CASE.me,3)]).map(r=>[r.name,r===CASE.me?1:0]),
-     ok:"자기 계급장도 못 읽으면 조사관이 아니다.",show:CASE.me},
   ];
   let s=0;
   const draw=()=>{
     const st=steps[s];
-    openPanel(`출입문 · 수하 ${s+1}/3`,`
+    openPanel(`출입문 · 수하 ${s+1}/2`,`
       ${st.show?`<div class="guard">${face(st.show.g)}<div class="badge"><small>내 계급장</small>${rIns(st.show)}</div></div>`:""}
       <p class="challenge">${st.q}</p>
       <div class="choices" id="ch">${st.opts.map((o,k)=>`<button class="choice" type="button" data-k="${k}">${o[0]}</button>`).join("")}</div>
       <div id="fb"></div>`,hint);
     panelCard.querySelectorAll("#ch .choice").forEach(c=>c.onclick=()=>{
       const k=+c.dataset.k;
-      if(!st.opts[k][1]){c.classList.add("no");c.disabled=true;wrong(15);
+      if(!st.opts[k][1]){c.classList.add("no");c.disabled=true;wrong(10);
         $("#fb").innerHTML=`<p class="verdict bad">문 너머가 조용해진다. 총구가 이쪽을 향한 느낌.</p>`;return;}
       c.classList.add("ok");panelCard.querySelectorAll("#ch .choice").forEach(b=>b.disabled=true);Sound.stamp();
       const last=s===steps.length-1;
@@ -1672,8 +1810,8 @@ function ending(win,line){
   if(win){
     Sound.win();
     const tl=state.timeLeft,grade=
-      (tl>300&&state.busts===0&&state.hints===0)?"S · 침착한 조사관":
-      (tl>150&&state.busts<=1&&state.hints<=2)?"A · 임무 완수":"B · 겨우 빠져나옴";
+      (tl>300&&state.busts===0)?"S · 침착한 조사관":
+      (tl>120&&state.busts<=1)?"A · 임무 완수":"B · 겨우 빠져나옴";
     card.innerHTML=`
       <p class="story-tag">해결 · 동틀 무렵</p>
       <h1>문이 열렸다.</h1>
