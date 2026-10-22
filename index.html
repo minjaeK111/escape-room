@@ -129,7 +129,7 @@ body{font-family:var(--f-body);color:var(--text);background:#000;overflow:hidden
 #actBtn{position:fixed;right:16px;bottom:110px;z-index:6;width:78px;height:78px;border-radius:50%;
   border:2px solid var(--brass);background:rgba(216,180,90,.3);color:var(--brass-lite);font-family:var(--f-display);font-size:1.05rem;
   box-shadow:0 0 18px rgba(216,180,90,.45)}
-#flashBtn{position:fixed;right:118px;bottom:44px;z-index:6;width:54px;height:54px;border-radius:50%;
+#flashBtn{position:fixed;right:16px;bottom:200px;z-index:6;width:54px;height:54px;border-radius:50%;
   border:1.5px solid var(--line);background:rgba(10,13,7,.6);color:var(--text);font-family:var(--f-label);font-size:.7rem}
 
 #toast{position:fixed;left:50%;bottom:120px;transform:translateX(-50%) translateY(12px);z-index:7;
@@ -295,7 +295,7 @@ body{font-family:var(--f-body);color:var(--text);background:#000;overflow:hidden
 #nowebgl{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:30px;background:var(--ground);text-align:center}
 #nowebgl.show{display:flex}
 #vignette{position:fixed;inset:0;z-index:4;pointer-events:none;
-  background:radial-gradient(130% 100% at 50% 45%,transparent 55%,rgba(0,0,0,.18) 100%)}
+  background:radial-gradient(125% 95% at 50% 45%,transparent 38%,rgba(0,0,0,.5) 78%,rgba(0,0,0,.88) 100%)}
 #grain{position:fixed;inset:0;z-index:4;pointer-events:none;opacity:.05;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 body.postfx #vignette,body.postfx #grain{display:none}
@@ -355,6 +355,7 @@ body.postfx #vignette,body.postfx #grain{display:none}
 <div id="toast"></div>
 <div id="flash"></div>
 <div id="vignette"></div>
+<div id="grain"></div>
 <div id="blackout"></div>
 
 <div id="panel"><div class="panel-card" id="panelCard"></div></div>
@@ -368,7 +369,7 @@ body.postfx #vignette,body.postfx #grain{display:none}
     <p style="font-family:var(--f-label);letter-spacing:.08em;font-size:.8rem;color:var(--muted)">난이도<span class="diff"><b></b><b></b><b class="off"></b><b class="off"></b><b class="off"></b></span> &nbsp;·&nbsp; 제한시간 12:00 &nbsp;·&nbsp; 퍼즐마다 &ldquo;알아두기&rdquo; 카드 &nbsp;·&nbsp; 힌트 무료</p>
     <div class="controls" id="controls">
       <div><span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span> 이동</div>
-      <div><span class="kbd">Shift</span> 달리기 · 빛나는 물체 클릭 = 자동 이동</div>
+      <div><span class="kbd">Shift</span> 달리기 · <span class="kbd">F</span> 손전등</div>
       <div><span class="kbd">마우스</span> 둘러보기 (클릭 시 고정)</div>
       <div><span class="kbd">E</span> / 클릭 조사</div>
             <div><span class="kbd">Q</span> 수첩 · <span class="kbd">B</span> 교범</div>
@@ -660,19 +661,19 @@ function build3D(){
   renderer.setSize(innerWidth,innerHeight);
   renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   renderer.outputEncoding=THREE.sRGBEncoding;
-  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=0.72;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.0;
   mount.appendChild(renderer.domElement);
 
   scene=new THREE.Scene();
-  scene.background=new THREE.Color(0xd9d8d2);
-  scene.fog=new THREE.Fog(0xd9d8d2,16,36);
+  scene.background=new THREE.Color(0x07090c);
+  scene.fog=new THREE.FogExp2(0x07090c,0.04);
   camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,0.05,100);
 
   const mat=(c,r,m,e)=>new THREE.MeshStandardMaterial({color:c,roughness:r==null?.85:r,metalness:m||0,emissive:e||0x000000});
   function rbox(w,h,d,r){
     r=Math.min(r, w/2-1e-3, h/2-1e-3, d/2-1e-3);
     if(r<=0.002) return new THREE.BoxGeometry(w,h,d);
-    const g=new THREE.BoxGeometry(w,h,d,12,12,12), p=g.attributes.position, v=new THREE.Vector3();
+    const g=new THREE.BoxGeometry(w,h,d,5,5,5), p=g.attributes.position, v=new THREE.Vector3();
     const hx=w/2-r, hy=h/2-r, hz=d/2-r;
     for(let i=0;i<p.count;i++){
       v.fromBufferAttribute(p,i);
@@ -684,7 +685,7 @@ function build3D(){
   }
   const box=(w,h,d,material,x,y,z,ry,rad)=>{
     const mn=Math.min(w,h,d);
-    const r=Math.max(rad==null?0:rad, Math.min(0.09, mn*0.49));   // 얇은 판은 알약처럼, 큰 덩어리는 넉넉히 둥글게
+    const r=Math.min(rad==null?0.02:rad, 0.025, mn*0.3);   // 살짝만 둥글린 각진 소품
     const g=new THREE.Mesh(rbox(w,h,d,r),material);
     g.position.set(x,y,z);if(ry)g.rotation.y=ry;g.castShadow=true;g.receiveShadow=true;scene.add(g);return g;};
   const solid=(x0,x1,z0,z1)=>solids.push({x0,x1,z0,z1});
@@ -795,21 +796,30 @@ function build3D(){
     const cube=new THREE.CubeTexture([side(),side(),flat("#fffdf6"),flat("#9c9890"),side(),side()]);cube.needsUpdate=true;
     const pm=new THREE.PMREMGenerator(renderer);pm.compileCubemapShader();
     try{scene.environment=pm.fromCubemap(cube).texture;}catch(e){}
+    scene.traverse(()=>{});scene.environment=null; // 야간: 환경광 끔
   }
-  scene.add(new THREE.HemisphereLight(0xfaf8f2,0xa8a39a,0.26));
-  scene.add(new THREE.AmbientLight(0xffffff,0.03));
-  const sun=new THREE.DirectionalLight(0xfff8ee,0.32);
-  sun.position.set(2,RH+3,1);sun.target.position.set(0,0,0.008);
-  sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.radius=9;sun.shadow.bias=-0.0003;
+  scene.add(new THREE.HemisphereLight(0x2b3452,0x171208,0.28));
+  const sun=new THREE.DirectionalLight(0xa9c6ee,0.7);   // 창으로 드는 달빛
+  sun.position.set(1.8,5.4,zF-5.8);sun.target.position.set(0,1,zF+4.6);
+  sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.radius=4;sun.shadow.bias=-0.0004;
   sun.shadow.camera.left=-10;sun.shadow.camera.right=10;sun.shadow.camera.top=11;sun.shadow.camera.bottom=-11;sun.shadow.camera.far=30;
   scene.add(sun,sun.target);
-  const panelMat=new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xfdfdf6,emissiveIntensity:1.0,roughness:1});
-  const panelFrame=mat(0xd8d8d4,.6,.2);
+  // 야간 — 형광등 대부분 소등, 취침등 1개 + 1개 깜빡임
+  const panelFrame=mat(0x3a3b3e,.6,.2);
   for(let cx=-1;cx<=1;cx+=2) for(let pz=-2;pz<=2;pz++){
-    const p=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.04,1.25),panelMat);p.position.set(cx*2.5,RH-0.03,pz*3.2);scene.add(p);
+    const on=(cx===-1&&pz===0), flick=(cx===1&&pz===1);
+    const pm2=new THREE.MeshStandardMaterial({color:0x9a9b9e,emissive:on?0xe6ecf4:(flick?0x2a2d33:0x121316),emissiveIntensity:on?1.1:(flick?.3:0),roughness:1});
+    const p=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.04,1.25),pm2);p.position.set(cx*2.5,RH-0.03,pz*3.2);scene.add(p);
     box(0.72,0.07,1.37,panelFrame,cx*2.5,RH-0.02,pz*3.2,0,0.025);
-    if(pz%2===0){const pl=new THREE.PointLight(0xfff6e6,0.22,10,2);pl.position.set(cx*2.5,RH-.5,pz*3.2);scene.add(pl);}
+    if(on){const pl=new THREE.PointLight(0xcfe0f2,.5,9,2);pl.position.set(cx*2.5,RH-.4,pz*3.2);scene.add(pl);}
+    if(flick){const pl=new THREE.PointLight(0xcfe0f2,.3,7,2);pl.position.set(cx*2.5,RH-.4,pz*3.2);scene.add(pl);flickPanel={mesh:p,light:pl};}
   }
+  // 손전등 — 시선을 살짝 늦게 따라온다
+  flash=new THREE.SpotLight(0xfff0d8,2.2,16,0.5,0.55,1.4);
+  flash.castShadow=true;flash.shadow.mapSize.set(1024,1024);flash.shadow.bias=-0.0008;scene.add(flash,flash.target);
+  // 복도 그림자 (먼 벽)
+  shadowFig=new THREE.Mesh(new THREE.PlaneGeometry(1.1,2.5),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0,depthWrite:false}));
+  shadowFig.position.set(0,1.6,zF+0.6);shadowFig.userData.noRay=true;scene.add(shadowFig);
   // 천장 카세트 에어컨 (사진 1 중앙)
   box(0.9,0.06,0.9,mat(0xf2f2ee,.7),0,RH-0.03,-2.4,0,0.025);
   for(const s of [-1,1]){box(0.7,0.02,0.1,mat(0xcfcfca,.6),0,RH-0.065,-2.4+s*0.32,0,0.03);box(0.1,0.02,0.7,mat(0xcfcfca,.6),s*0.32,RH-0.065,-2.4,0,0.03);}
@@ -830,7 +840,7 @@ function build3D(){
     const c=new THREE.Mesh(g,m);c.position.set((x0+x1)/2,h/2+0.1,zF+0.24);c.castShadow=true;c.receiveShadow=true;scene.add(c);
   }
   for(const wx of [-2.7,2.7]){
-    const gl=new THREE.Mesh(new THREE.PlaneGeometry(3.0,1.7),new THREE.MeshStandardMaterial({color:0x2a3450,roughness:.1,metalness:.3}));
+    const gl=new THREE.Mesh(new THREE.PlaneGeometry(3.0,1.7),new THREE.MeshBasicMaterial({color:0x7d93bd}));
     gl.position.set(wx,2.0,zF+0.03);scene.add(gl);
     box(3.1,0.06,0.1,mat(0xe9e9e6,.5),wx,2.9,zF+0.06,0,0.025);box(3.1,0.06,0.1,mat(0xe9e9e6,.5),wx,1.12,zF+0.06,0,0.025);
     box(3.6,0.05,0.05,mat(0x8a8a86,.4,.5),wx,RH-0.32,zF+0.26,0,0.025);
@@ -876,9 +886,9 @@ function build3D(){
     for(const sx of [-1,1]){const r=new THREE.Mesh(new THREE.CylinderGeometry(0.028,0.028,W,20),bedFrame);r.rotation.x=Math.PI/2;r.position.set(cx+sx*(L/2-0.03),0.47,cz);r.castShadow=true;scene.add(r);}
     box(0.06,0.5,W,woodMat,cx+wallSide*L/2,0.68,cz,0,0.03);     // 머리판 (원목)
     box(0.06,0.32,W,woodMat,cx-wallSide*L/2,0.6,cz,0,0.03);     // 발판
-    box(L-0.1,0.2,W-0.06,sheet,cx,0.58,cz,0,0.1);   // 매트리스
-    {const bl=new THREE.Mesh(wrinkle(rbox(L-0.5,0.13,W-0.04,0.065),0.012,7),green);bl.position.set(cx-wallSide*0.2,0.72,cz);bl.castShadow=true;bl.receiveShadow=true;scene.add(bl);} // 녹색 모포 (구김)
-    {const pw=new THREE.Mesh(wrinkle(rbox(0.46,0.2,W-0.3,0.1),0.008,12),green);pw.position.set(cx+wallSide*(L/2-0.33),0.77,cz);pw.castShadow=true;scene.add(pw);} // 베개(말아 둔 모포)
+    box(L-0.1,0.18,W-0.06,sheet,cx,0.57,cz,0,0.04);   // 매트리스
+    {const bl=new THREE.Mesh(wrinkle(rbox(L-0.5,0.1,W-0.04,0.03),0.01,7),green);bl.position.set(cx-wallSide*0.2,0.72,cz);bl.castShadow=true;bl.receiveShadow=true;scene.add(bl);} // 녹색 모포 (구김)
+    {const pw=new THREE.Mesh(wrinkle(rbox(0.46,0.16,W-0.3,0.05),0.008,12),green);pw.position.set(cx+wallSide*(L/2-0.33),0.77,cz);pw.castShadow=true;scene.add(pw);} // 베개(말아 둔 모포)
     const fl=cx-wallSide*(L/2+0.4);
     box(0.62,0.42,0.5,bedFrame,fl,0.21,cz,0,0.05);                // 풋로커
     solid(Math.min(cx-L/2,fl-0.31),Math.max(cx+L/2,fl+0.31),cz-W/2,cz+W/2);
@@ -927,7 +937,7 @@ function build3D(){
     const seat=mat(0x3b5a96,.7), back=mat(0x4a6aa6,.7), leg=mat(0x8e8e8a,.5,.3);
     const chair=(x,z,ry)=>{
       const g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=ry;scene.add(g);
-      const add=(w,h,d,m,px,py,pz)=>{const b=new THREE.Mesh(rbox(w,h,d,Math.min(0.05,Math.min(w,h,d)*0.49)),m);b.position.set(px,py,pz);b.castShadow=true;b.receiveShadow=true;g.add(b);};
+      const add=(w,h,d,m,px,py,pz)=>{const b=new THREE.Mesh(rbox(w,h,d,Math.min(0.02,Math.min(w,h,d)*0.3)),m);b.position.set(px,py,pz);b.castShadow=true;b.receiveShadow=true;g.add(b);};
       add(0.42,0.06,0.4,seat,0,0.46,0);add(0.42,0.3,0.05,back,0,0.72,-0.18);
       for(const sx of [-1,1])for(const sz of [-1,1])add(0.025,0.45,0.025,leg,sx*0.18,0.22,sz*0.17);
       for(const sx of [-1,1])add(0.025,0.3,0.025,leg,sx*0.18,0.6,-0.18);
@@ -943,9 +953,9 @@ function build3D(){
   box(0.42,0.04,0.4,mat(0x3b5a96,.7),dx,0.45,dz+0.75,0,0.03);box(0.42,0.3,0.04,mat(0x4a6aa6,.7),dx,0.72,dz+0.93,0,0.03);
   solid(dx-0.7,dx+0.7,dz-0.35,dz+1.0);
   box(0.22,0.025,0.22,mat(0x2a2d33,.6),dx-0.5,0.78,dz-0.1,0,0.025);box(0.03,0.42,0.03,mat(0x2a2d33,.5),dx-0.5,1.0,dz-0.1,0,0.03);
-  const shade=new THREE.Mesh(new THREE.ConeGeometry(0.13,0.16,32,1,true),new THREE.MeshStandardMaterial({color:0x2a2d33,emissive:0xffd9a8,emissiveIntensity:.9,side:THREE.DoubleSide}));
+  const shade=new THREE.Mesh(new THREE.ConeGeometry(0.11,0.15,32,1,true),new THREE.MeshStandardMaterial({color:0x2a2d33,emissive:0xffb066,emissiveIntensity:1.4,side:THREE.DoubleSide}));
   shade.position.set(dx-0.44,1.2,dz-0.06);shade.rotation.z=0.45;scene.add(shade);
-  lamp=new THREE.SpotLight(0xffd9a8,0.5,5,Math.PI/4,0.6,1.5);lamp.position.set(dx-0.42,1.3,dz-0.06);lamp.target.position.set(dx+0.2,0.75,dz);scene.add(lamp,lamp.target);
+  lamp=new THREE.SpotLight(0xffb066,1.5,8,Math.PI/4,0.6,1.5);lamp.castShadow=true;lamp.position.set(dx-0.42,1.3,dz-0.06);lamp.target.position.set(dx+0.2,0.75,dz);scene.add(lamp,lamp.target);
   const note=new THREE.Mesh(rbox(0.42,0.02,0.58,0.005),new THREE.MeshStandardMaterial({color:0xf3eedf,roughness:.9,emissive:0xd8b45a,emissiveIntensity:0}));
   note.position.set(dx-0.05,0.775,dz+0.03);note.rotation.y=-0.12;note.castShadow=true;scene.add(note);
   reg(note,{id:"roster",label:"불침번 근무표",sub:"결재란이 비어 있다",cam:[dx,1.45,dz-1.1],tgt:[dx-0.05,0.78,dz+0.03]});
@@ -1009,7 +1019,7 @@ function build3D(){
   reg(door,{id:"door",label:"출입문",sub:"밖에서 잠겼다",cam:[3.2,1.5,zN-2.2],tgt:[3.2,1.15,zN-0.06]});
   corridor=new THREE.Mesh(new THREE.PlaneGeometry(1.2,2.3),new THREE.MeshBasicMaterial({color:0xfff2d6,toneMapped:false}));
   corridor.position.set(3.2,1.15,zN-0.005);corridor.rotation.y=Math.PI;corridor.visible=false;corridor.userData.noRay=true;scene.add(corridor);
-  leakL=new THREE.PointLight(0xffd9a0,0,5,2);leakL.position.set(3.2,0.9,zN-0.8);scene.add(leakL);
+  leakL=new THREE.PointLight(0xffc878,0.5,4.5,2);leakL.position.set(3.2,0.9,zN-0.8);scene.add(leakL);
 
   // ---- 단서 위치의 반짝임
   const gt=glowTex();
@@ -1208,7 +1218,7 @@ function animate(){
     const aimTo=camera.position.clone().addScaledVector(_v1,6);
     flashAim.lerp(aimTo,1-Math.pow(0.00002,dt));
     flash.target.position.copy(flashAim);
-    const fi=flashOn?(1.9+(Math.random()<0.006?-1.2:0)):0;
+    const fi=flashOn?(2.2+(Math.random()<0.006?-1.4:0)):0;
     flash.intensity+=(fi-flash.intensity)*.35;
   }
   for(const o of interactables){
@@ -1365,7 +1375,7 @@ const ITEMS=[["manual","교범"],["tag","인식표"],["freq","주파수"],["pw",
 function startGame(){
   document.getElementById("story").classList.add("hide");
   ["hud","inv","crosshair"].forEach(id=>document.getElementById(id).hidden=false);
-  if(IS_TOUCH)document.getElementById("joy").hidden=false;
+  if(IS_TOUCH)["joy","flashBtn"].forEach(id=>document.getElementById(id).hidden=false);
   state.started=true;look.yaw=0.03;look.pitch=0.02;if(IS_TOUCH)document.body.classList.add("touch");
   Sound.init();updateSoundBtn();
   state.timer=setInterval(tick,1000);
