@@ -414,6 +414,15 @@ body.postfx #vignette,body.postfx #grain{display:none}
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/SSAOShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/math/SimplexNoise.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/MaskPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/SSAOPass.js"></script>
 <script>
 "use strict";
 const REDUCE=matchMedia("(prefers-reduced-motion:reduce)").matches;
@@ -651,7 +660,7 @@ function build3D(){
   renderer.setSize(innerWidth,innerHeight);
   renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   renderer.outputEncoding=THREE.sRGBEncoding;
-  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=0.66;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=0.72;
   mount.appendChild(renderer.domElement);
 
   scene=new THREE.Scene();
@@ -701,6 +710,30 @@ function build3D(){
     if(opt.rep){t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(opt.rep[0],opt.rep[1]);}
     return t;
   }
+  // 천 짜임·벽 요철용 범프맵 — 조명이 표면 결을 따라 미세하게 흔들리게
+  function bumpTex(w,h,fn,rep){
+    const c=document.createElement("canvas");c.width=w;c.height=h;const g=c.getContext("2d");
+    const id=g.createImageData(w,h),d=id.data;
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){const v=128+fn(x,y)*127;const i=(y*w+x)*4;d[i]=d[i+1]=d[i+2]=v;d[i+3]=255;}
+    g.putImageData(id,0,0);
+    const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;if(rep)t.repeat.set(rep[0],rep[1]);t.anisotropy=8;return t;
+  }
+  const weave=(x,y)=>(Math.sin(x*1.9)*Math.sin(y*1.9))*0.45+(Math.random()-.5)*0.35;
+  const plaster=(x,y)=>(Math.sin(x*.11+Math.sin(y*.07)*3)*Math.sin(y*.13+Math.cos(x*.05)*2))*0.5+(Math.random()-.5)*0.25;
+  const fabricBump=bumpTex(256,256,weave,[6,6]);
+  const wallBump=bumpTex(512,512,plaster,[3,2]);
+  const woodGrain=(x,y)=>Math.sin(y*.35+Math.sin(x*.02)*6+Math.sin(y*.05)*2)*0.5+(Math.random()-.5)*.2;
+  const woodBump=bumpTex(256,256,woodGrain,[2,1]);
+  // 겉면 꼭짓점만 완만한 노이즈로 밀어 올려 천이 눌린·구겨진 느낌을 준다
+  function wrinkle(geom,amp,freq){
+    const p=geom.attributes.position,v=new THREE.Vector3();let maxY=-1e9;
+    for(let i=0;i<p.count;i++)maxY=Math.max(maxY,p.getY(i));
+    const ph=Math.random()*10;
+    for(let i=0;i<p.count;i++){v.fromBufferAttribute(p,i);if(v.y<maxY-0.02)continue;
+      const n=Math.sin(v.x*freq+ph)*Math.cos(v.z*freq*1.3+ph*.7)+0.5*Math.sin(v.x*freq*2.7+v.z*freq*1.9+ph);
+      p.setY(i,v.y+n*amp);}
+    geom.computeVertexNormals();return geom;
+  }
   function jitter(hex,amt){
     const c=new THREE.Color(hex),h={};c.getHSL(h);
     c.setHSL(h.h,h.s,Math.max(0,Math.min(1,h.l+(Math.random()-.5)*amt)));return c;
@@ -725,7 +758,7 @@ function build3D(){
 
   // ---- 바닥: 밝은 회색 리놀륨 (사진처럼 매끈, 약한 반사)
   const floorTex=softTex(2048,2048,"#c9c8c1",["#bdbcb5","#d4d3cc","#c2c1ba"],{n:14,alpha:.06,grid:128,gridColor:"rgba(0,0,0,0.045)",gridW:2});
-  const floor=new THREE.Mesh(new THREE.PlaneGeometry(RW,RD),new THREE.MeshStandardMaterial({map:floorTex,roughness:.42,metalness:.04}));
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(RW,RD),new THREE.MeshStandardMaterial({map:floorTex,roughness:.45,metalness:.04,bumpMap:wallBump,bumpScale:.0015}));
   floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);
   // ---- 천장: 흰 텍스 타일 격자
   const ceilTex=softTex(1024,1024,"#eeede8",["#e6e5e0","#f3f2ee"],{n:8,alpha:.05,grid:1024/17,gridColor:"rgba(0,0,0,0.09)",gridW:2});
@@ -738,9 +771,9 @@ function build3D(){
   function wall(w,x,z,ry){
     const loTex=softTex(2048,768,"#cfa9a3",["#c69f99","#d6b2ac"],{n:8,alpha:.07});
     const hiTex=softTex(2048,1536,"#dcdad4",["#d4d2cc","#e4e2dc"],{n:10,alpha:.06});
-    const lo=new THREE.Mesh(new THREE.PlaneGeometry(w,wainH),new THREE.MeshStandardMaterial({map:loTex,roughness:.92}));
+    const lo=new THREE.Mesh(new THREE.PlaneGeometry(w,wainH),new THREE.MeshStandardMaterial({map:loTex,roughness:.9,bumpMap:wallBump,bumpScale:.004}));
     lo.position.set(x,wainH/2,z);if(ry)lo.rotation.y=ry;lo.receiveShadow=true;scene.add(lo);
-    const hi=new THREE.Mesh(new THREE.PlaneGeometry(w,RH-wainH),new THREE.MeshStandardMaterial({map:hiTex,roughness:.95}));
+    const hi=new THREE.Mesh(new THREE.PlaneGeometry(w,RH-wainH),new THREE.MeshStandardMaterial({map:hiTex,roughness:.93,bumpMap:wallBump,bumpScale:.005}));
     hi.position.set(x,wainH+(RH-wainH)/2,z);if(ry)hi.rotation.y=ry;hi.receiveShadow=true;scene.add(hi);
     box(ry?0.03:w,0.06,ry?w:0.03,trimMat,x,wainH,z,0,0.025);
     box(ry?0.04:w,0.1,ry?w:0.04,bbMat,x,0.05,z,0,0.025);
@@ -784,15 +817,17 @@ function build3D(){
   box(0.9,0.3,0.22,mat(0xf4f4f0,.6),xL+0.13,RH-0.5,-6.2,0,0.03);
 
   // ---- 먼 벽: 넓은 청회색 커튼 2폭 + 창 + 라디에이터 + 중앙 TV (사진 1)
-  const curtMat=c=>new THREE.MeshStandardMaterial({color:c,roughness:.95});
   function curtain(x0,x1){
-    const n=Math.round((x1-x0)/0.13);
-    for(let i=0;i<=n;i++){
-      const x=x0+i*(x1-x0)/n;
-      const m=curtMat(jitter(0x8b98ab,.06));
-      const c=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,RH-0.55,24),m);
-      c.position.set(x,(RH-0.55)/2+0.1,zF+0.22+((i%2)?0.05:0));c.castShadow=true;scene.add(c);
-    }
+    const w=x1-x0,h=RH-0.5,seg=Math.round(w*40);
+    const g=new THREE.PlaneGeometry(w,h,seg,24),p=g.attributes.position;
+    const ph=Math.random()*6;
+    for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i);
+      const fold=Math.sin(x*12+ph)*0.07+Math.sin(x*31+ph*2)*0.02;           // 주름
+      const sag=(y/h+0.5)*0.03*Math.sin(x*5+ph);                             // 아래로 갈수록 살짝 퍼짐
+      p.setZ(i,fold+sag);}
+    g.computeVertexNormals();
+    const m=new THREE.MeshStandardMaterial({color:0x8d9bae,roughness:.97,bumpMap:fabricBump,bumpScale:.004,side:THREE.DoubleSide});
+    const c=new THREE.Mesh(g,m);c.position.set((x0+x1)/2,h/2+0.1,zF+0.24);c.castShadow=true;c.receiveShadow=true;scene.add(c);
   }
   for(const wx of [-2.7,2.7]){
     const gl=new THREE.Mesh(new THREE.PlaneGeometry(3.0,1.7),new THREE.MeshStandardMaterial({color:0x2a3450,roughness:.1,metalness:.3}));
@@ -826,21 +861,24 @@ function build3D(){
 
   // ---- 침대 6개: 흰 철제 프레임 + 원목 머리판/발판 + 녹색 침구 (사진 1·2)
   const bedFrame=new THREE.MeshStandardMaterial({color:0xf0efea,roughness:.4,metalness:.25});
-  const woodMat=new THREE.MeshStandardMaterial({map:softTex(512,256,"#c08a5a",["#b47d4e","#cc9666"],{n:8,alpha:.08}),roughness:.6});
+  const woodMat=new THREE.MeshStandardMaterial({map:softTex(512,256,"#c08a5a",["#b47d4e","#cc9666"],{n:8,alpha:.08}),roughness:.55,bumpMap:woodBump,bumpScale:.006});
   function bunk(cx0,cz0){
     const cx=cx0, cz=cz0+(Math.random()-.5)*0.04;
     const L=2.0,W=0.95,wallSide=cx<0?-1:1;
-    const green=new THREE.MeshStandardMaterial({color:jitter(0x4a6240,.05),roughness:.95});
+    const green=new THREE.MeshStandardMaterial({color:jitter(0x4a6240,.05),roughness:.96,bumpMap:fabricBump,bumpScale:.006});
+    const sheet=new THREE.MeshStandardMaterial({color:0xf1f0ea,roughness:.92,bumpMap:fabricBump,bumpScale:.004});
     for(const sx of [-1,1])for(const sz of [-1,1]){
       const lg=new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.025,0.42,36),bedFrame);
       lg.position.set(cx+sx*(L/2-0.06),0.21,cz+sz*(W/2-0.05));lg.castShadow=true;scene.add(lg);
     }
-    box(L,0.07,W,bedFrame,cx,0.45,cz,0,0.035);
+    box(L-0.1,0.05,W-0.1,bedFrame,cx,0.45,cz,0,0.02);
+    for(const sz of [-1,1]){const r=new THREE.Mesh(new THREE.CylinderGeometry(0.028,0.028,L,20),bedFrame);r.rotation.z=Math.PI/2;r.position.set(cx,0.47,cz+sz*(W/2-0.03));r.castShadow=true;scene.add(r);}
+    for(const sx of [-1,1]){const r=new THREE.Mesh(new THREE.CylinderGeometry(0.028,0.028,W,20),bedFrame);r.rotation.x=Math.PI/2;r.position.set(cx+sx*(L/2-0.03),0.47,cz);r.castShadow=true;scene.add(r);}
     box(0.06,0.5,W,woodMat,cx+wallSide*L/2,0.68,cz,0,0.03);     // 머리판 (원목)
     box(0.06,0.32,W,woodMat,cx-wallSide*L/2,0.6,cz,0,0.03);     // 발판
-    box(L-0.1,0.2,W-0.06,mat(0xf1f0ea,.9),cx,0.58,cz,0,0.1);   // 매트리스
-    box(L-0.5,0.13,W-0.04,green,cx-wallSide*0.2,0.72,cz,0,0.065);// 녹색 모포
-    box(0.46,0.2,W-0.3,green,cx+wallSide*(L/2-0.33),0.77,cz,0,0.1); // 베개(말아 둔 모포)
+    box(L-0.1,0.2,W-0.06,sheet,cx,0.58,cz,0,0.1);   // 매트리스
+    {const bl=new THREE.Mesh(wrinkle(rbox(L-0.5,0.13,W-0.04,0.065),0.012,7),green);bl.position.set(cx-wallSide*0.2,0.72,cz);bl.castShadow=true;bl.receiveShadow=true;scene.add(bl);} // 녹색 모포 (구김)
+    {const pw=new THREE.Mesh(wrinkle(rbox(0.46,0.2,W-0.3,0.1),0.008,12),green);pw.position.set(cx+wallSide*(L/2-0.33),0.77,cz);pw.castShadow=true;scene.add(pw);} // 베개(말아 둔 모포)
     const fl=cx-wallSide*(L/2+0.4);
     box(0.62,0.42,0.5,bedFrame,fl,0.21,cz,0,0.05);                // 풋로커
     solid(Math.min(cx-L/2,fl-0.31),Math.max(cx+L/2,fl+0.31),cz-W/2,cz+W/2);
@@ -981,10 +1019,30 @@ function build3D(){
     sp.position.copy(p);sp.scale.setScalar(0.34);sp.userData.noRay=true;sp.userData.owner=o;scene.add(sp);glints.push(sp);
   }
 
+  setupPost();
   setCam(0);
   animate();
 }
-function setupPost(){}
+let ssao=null,fxaa=null;
+function setupPost(){
+  if(!THREE.EffectComposer||!THREE.RenderPass||!THREE.ShaderPass)return;
+  try{
+    composer=new THREE.EffectComposer(renderer);
+    const pr=Math.min(devicePixelRatio,IS_TOUCH?1.5:2);
+    composer.setPixelRatio(pr);composer.setSize(innerWidth,innerHeight);
+    composer.addPass(new THREE.RenderPass(scene,camera));
+    if(!IS_TOUCH&&THREE.SSAOPass){
+      ssao=new THREE.SSAOPass(scene,camera,innerWidth,innerHeight);
+      ssao.kernelRadius=0.55;ssao.minDistance=0.0008;ssao.maxDistance=0.06;
+      composer.addPass(ssao);
+    }
+    if(THREE.FXAAShader){
+      fxaa=new THREE.ShaderPass(THREE.FXAAShader);
+      fxaa.material.uniforms.resolution.value.set(1/(innerWidth*pr),1/(innerHeight*pr));
+      composer.addPass(fxaa);
+    }
+  }catch(e){composer=null;ssao=null;fxaa=null;}
+}
 
 const MK={board:"게시판",locker:"관물대",roster:"근무표",radio:"무전기",cctv:"CCTV",safe:"보안함",door:"출입문"};
 function reg(mesh,d){
@@ -1191,10 +1249,7 @@ function animate(){
   }
   hitFx*=Math.pow(0.04,dt);
   alertFx+=(state.alert/100-alertFx)*Math.min(1,dt*3);
-  if(composer){
-    fxPass.uniforms.uTime.value=t;fxPass.uniforms.uAlert.value=alertFx;fxPass.uniforms.uHit.value=hitFx;
-    composer.render(dt);
-  }else renderer.render(scene,camera);
+  if(composer)composer.render(dt);else renderer.render(scene,camera);
 }
 function drawTV(t){
   const c=tvCtx,w=192,h=108,img=c.createImageData(w,h),d=img.data;
@@ -1213,7 +1268,8 @@ function drawTV(t){
   tvTex.needsUpdate=true;
 }
 addEventListener("resize",()=>{if(!renderer||!camera)return;camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth,innerHeight);if(composer)composer.setSize(innerWidth,innerHeight);});
+  renderer.setSize(innerWidth,innerHeight);if(composer){composer.setSize(innerWidth,innerHeight);
+    const pr=Math.min(devicePixelRatio,IS_TOUCH?1.5:2);if(fxaa)fxaa.material.uniforms.resolution.value.set(1/(innerWidth*pr),1/(innerHeight*pr));if(ssao)ssao.setSize(innerWidth,innerHeight);}});
 
 /* ---- 입력: 포인터 락(FPS) / 드래그 / 터치 ---- */
 let locked=false,canLock=!IS_TOUCH&&!!(document.body&&document.body.requestPointerLock),wantRelock=false,drag=null;
